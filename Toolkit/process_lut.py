@@ -39,10 +39,10 @@ for apl in apl_levels:
         print(f"  -> File {filepath} not found, skipping...")
         continue
         
-    # FIX: index_col=0 and .T tells Pandas to rotate the HCFR spreadsheet 90 degrees!
+    # index_col=0 and .T tells Pandas to rotate the HCFR spreadsheet 90 degrees
     df = pd.read_csv(filepath, sep=';', decimal='.', index_col=0).T
     
-    # FIX: .astype(float) ensures the data is strictly read as math numbers
+    # .astype(float) ensures the data is strictly read as math numbers
     stimulus_sent = df['% White'].astype(float).values / 100.0
     measured_nits = df['Y'].astype(float).values
     
@@ -101,7 +101,7 @@ for col in range(LUT_SIZE):
     lut_image[:, col] = vertical_interpolator(target_apl_axis)
 
 # Save as standard 8-bit RGB PNG with 16-bit packed data
-lut_image_16bit = np.clip(lut_image * 65535.0, 0, 65535).astype(np.uint16)
+lut_image_16bit = np.clip(np.round(lut_image * 65535.0), 0, 65535).astype(np.uint16)
 lut_image_rgb = np.zeros((LUT_SIZE, LUT_SIZE, 3), dtype=np.uint8)
 
 # Split the 16-bit integer into two 8-bit channels

@@ -43,7 +43,7 @@ static const float c2 = (2413.0 / 4096.0) * 32.0;
 static const float c3 = (2392.0 / 4096.0) * 32.0;
 
 // Converts PQ (0.0 - 1.0) to Relative Linear (0.0 - 1.0, where 1.0 = 10,000 nits)
-// Added abs() wraps to prevent compilation warnings for negative values
+// Note: abs() wraps are used to prevent compilation warnings for potential negative values
 float3 pq_to_linear(float3 pq) 
 {
     float3 pq_pow = pow(abs(max(pq, 0.0)), 1.0 / m2);
@@ -169,7 +169,7 @@ void PS_ApplyCorrection(float4 pos : SV_Position, float2 texcoord : TEXCOORD, ou
 // PASS 2: Calculate Accurate PQ Luma for Downsampling
 void PS_StorePQLuma(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 pq_luma_out : SV_Target)
 {
-    // FIX: Sample the corrected BackBuffer instead of a non-existent offline texture
+    // Sample the corrected BackBuffer to allow for temporal ABL steady-state convergence
     float4 color = tex2D(ReShade::BackBuffer, texcoord);
     float luma;
     
