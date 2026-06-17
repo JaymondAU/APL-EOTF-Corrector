@@ -39,7 +39,7 @@ A Python script (`process\_lut.py`) is included in the `Toolkit` folder. If you 
 5. Open `process\_lut.py` in a text editor and edit the `apl\_levels` array to reflect the exact APL percentages you tested.
 6. Run the script to generate your custom `EOTF\_Correction\_LUT.png`. *(Example calibration data is provided in the `Data` folder to show the expected format).*
 
-\---
+---
 
 
 
