@@ -3,7 +3,7 @@
 A 2D LUT-based ReShade shader and Python script to help correct APL-dependent HDR EOTF tracking errors.
 
 
-**Disclaimer:** The code for this project (both the HLSL shader and Python script) was heavily "vibe coded" in collaboration with Google Gemini via AI Studio.
+**Disclaimer:** The code for this project (both the HLSL shader and Python script) was heavily vibe coded with Google Gemini.
 
 
 ## The Included LUT (Gigabyte MO27Q2 QD-OLED)
