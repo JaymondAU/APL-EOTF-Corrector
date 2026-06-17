@@ -28,7 +28,7 @@ If you are using the official Windows HDR Calibration app, do not blindly trust 
 
 The Windows app forces you to calibrate using a 10% window size. Because OLEDs aggressively dim at a 10% window, the test pattern will visually clip way below your monitor's true 1% peak (e.g., clipping at ~450 nits instead of your panel's actual capability unless your display has built-in tone mapping in which case the test may still clip at your monitor's true peak brightness). On my setup, because Gigabyte applies its own aggressive brightness boost on top of this, the test pattern actually clips as early as 380 nits!
 
-If you set your max luminance to 400 nits based on that pattern, the OS reports this artificially low ceiling to your games. The game engine (or Windows Auto HDR) will then prematurely compress and tone map its HDR signal to fit inside that 400-nit container, meaning your peak brightness is functionally permanently capped at 400 nits. 
+If you set your max luminance to 450 nits based on that pattern, the OS reports this artificially low ceiling to your games. The game engine (or Windows Auto HDR) will then prematurely compress and tone map its HDR signal to fit inside that 450-nit container, meaning your peak brightness is functionally permanently capped at 450 nits. 
 
 The same issue happens if you match your in-game sliders to the calibration app, which is a very common (but flawed) piece of advice. If I did that, I would never see highlights brighter than 380 nits, even in bright, high-APL scenes where the monitor's native brightness response is actually accurate. If I used that low peak setting alongside my ReShade correction, my absolute peak brightness would be permanently crippled to 380 nits across the board.
 
