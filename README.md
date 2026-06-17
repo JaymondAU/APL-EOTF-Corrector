@@ -20,7 +20,8 @@ If you are using a different monitor, this specific LUT probably won't look corr
 4. Rename `Gigabyte_MO27Q2_EOTF_Correction_LUT.png` to exactly **`EOTF_Correction_LUT.png`**.
 5. Place this renamed image into your game's `reshade-shaders\Textures` folder.
 6. Launch the game and open the ReShade menu.
-7. Enable **APL_EOTF_Corrector**. Make sure the `APL Input Mode` in the shader settings matches your game's HDR format (PQ/HDR10 or scRGB).
+7. Enable **APL_EOTF_Corrector**. Make sure it is placed at the **very bottom** of your active effect list so it applies after all other effects.
+8. Make sure the `APL Input Mode` in the shader settings matches your game's HDR format (PQ/HDR10 or scRGB). *(Note: If using scRGB, leave the `scRGB Signal Reference` at 80 for most games, but adjust it if the midtones look completely washed out).*
 
 ## A Warning About the Windows HDR Calibration App
 
@@ -44,7 +45,12 @@ This tells Windows and your games that your monitor has infinite HDR headroom. I
 
 ## Generating Your Own LUT (For Calibrators)
 
-A Python script (`process_lut.py`) is included in the `Toolkit` folder. If you have a colorimeter and HCFR:
+A Python script (`process_lut.py`) is included in the `Toolkit` folder. 
+
+**Prerequisites:** You will need Python installed. Install the required dependencies by running:
+`pip install numpy pandas scipy imageio matplotlib`
+
+If you have a colorimeter and HCFR:
 
 1. Use madTPG as your test pattern generator.
 2. Run a sweep of CAPL tests. For the best interpolation results, keep these rules in mind:
