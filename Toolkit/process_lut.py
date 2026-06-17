@@ -109,10 +109,10 @@ lut_image_rgb[:,:,0] = (lut_image_16bit >> 8) & 0xFF  # Red channel = High byte
 lut_image_rgb[:,:,1] = lut_image_16bit & 0xFF         # Green channel = Low byte
 lut_image_rgb[:,:,2] = 0                              # Blue channel = Unused
 
-imageio.imwrite("QDOLED_Correction_LUT.png", lut_image_rgb)
+imageio.imwrite("EOTF_Correction_LUT.png", lut_image_rgb)
 
 print("===================================================")
-print("SUCCESS: QDOLED_Correction_LUT.png has been created!")
+print("SUCCESS: EOTF_Correction_LUT.png has been created!")
 print("===================================================")
 print("Close the graph window to finish the script.")
 

@@ -82,7 +82,7 @@ float linear_to_pq_scalar(float lin)
 // =========================================================================
 
 // The packed 8-bit RGB PNG containing 16-bit math data. X = Target PQ Luma, Y = APL.
-texture TexCorrectionLUT < source = "QDOLED_Correction_LUT.png"; > { Width = 1024; Height = 1024; Format = RGBA8; SRGB = false; };
+texture TexCorrectionLUT < source = "EOTF_Correction_LUT.png"; > { Width = 1024; Height = 1024; Format = RGBA8; SRGB = false; };
 sampler SamplerLUT { Texture = TexCorrectionLUT; MinFilter = LINEAR; MagFilter = LINEAR; AddressU = CLAMP; AddressV = CLAMP; };
 
 // Full-resolution PQ Luma texture with a FULL MipMap chain for hardware downsampling
