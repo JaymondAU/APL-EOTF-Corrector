@@ -110,6 +110,7 @@ uniform bool DebugAPL <
 
 // --- Color Preservation (Optional) ---
 uniform bool EnableColorPreservation <
+    ui_spacing = 1;
     ui_category = "Color Preservation (Optional)";
     ui_label = "Enable Color Preservation";
     ui_tooltip = "Limits boost on bright colors to prevent hue shifting as they hit the monitor's physical limit. WARNING: Can cause inconsistent luminance.";
@@ -124,6 +125,7 @@ uniform float PEAK_MONITOR_NITS <
 
 // --- BT.2390 Tonemapping (Optional) ---
 uniform bool EnableTonemapping <
+    ui_spacing = 1;
     ui_category = "BT.2390 Tonemapping (Optional)";
     ui_label = "Enable Tonemapping";
     ui_tooltip = "Smoothly compresses highlights. Mostly unnecessary since the HCFR LUT inherently respects dynamic peak limits.";

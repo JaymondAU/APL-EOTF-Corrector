@@ -1,8 +1,6 @@
 # APL-EOTF-Corrector
 
-A 2D LUT-based ReShade shader and Python script to help correct APL-dependent HDR EOTF tracking errors.
-
-**Disclaimer:** The code for this project (both the HLSL shader and Python script) was developed with the assistance of Google Gemini.
+A 2D LUT-based ReShade shader and Python toolkit designed to override forced display dimming and correct APL-dependent HDR EOTF tracking errors. Take control of your monitor's tone mapping.
 
 ## Project Philosophy & Community Goal
 
@@ -42,15 +40,17 @@ Out of the box, the MO27Q2 tracks the PQ EOTF curve reasonably well in high APL 
 
 If you have a different monitor, or wish to profile a different picture mode, you can use the included Python toolkit to generate a custom LUT using a colorimeter, and submit it to the repository!
 
-## Alternatives and Credits
+## Massive Shoutouts & Standalone Alternatives
 
-This shader relies on physical hardware measurements. If you do not own a colorimeter to generate a custom LUT, there are several alternative shaders that use manual data entry to achieve results:
+This project literally would not exist without the absolute legends who pioneered APL tracking in ReShade. All four of these developers laid the groundwork that inspired this approach. 
 
-* **[LumaBoost by Valadore](https://github.com/Valadore/LumaBoost)**: A display hardware emulator. You can input your monitor's window brightness specifications (such as those found on review sites like RTINGS) to generate a custom ABL model. It includes features for shadow protection, skin-tone masking, and contrast recovery.
-* **[EOTF Boost by MSpeedo](https://github.com/mspeedo/QD-OLED-APL-FIXER) & [ShanSolox](https://github.com/shansolox/QD-OLED-APL-FIXER)**: Shaders featuring 1D APL lookups, BT.2390 Tonemapping, and color-preserving hue limits.
-* **[EOTF Boost by DespairArdor](https://github.com/DespairArdor/QD-OLED-APL-FIXER)**: The original ReShade APL tracking shader that inspired this project.
+If you don't have a colorimeter to build hardware-measured LUTs, you owe it to yourself to check out their incredible work. They let you dial in the corrections manually and achieve fantastic results:
 
-Credit to these developers: the temporal smoothing, BT.2390 tonemapping, and color-preserving math embedded in this shader were adapted directly from the work of MSpeedo and ShanSolox.
+* **[LumaBoost by Valadore](https://github.com/Valadore/LumaBoost)**: An incredible display hardware emulator. You can input your monitor's specific window brightness specs (like the ones from RTINGS) to generate a custom ABL model. It's packed with features for shadow protection, skin-tone masking, and contrast recovery.
+* **[EOTF Boost by MSpeedo](https://github.com/mspeedo/QD-OLED-APL-FIXER) & [ShanSolox](https://github.com/shansolox/QD-OLED-APL-FIXER)**: Brilliant shaders featuring 1D APL lookups, BT.2390 Tonemapping, and color-preserving hue limits. These guys pushed the envelope for mathematical HDR correction.
+* **[EOTF Boost by DespairArdor](https://github.com/DespairArdor/QD-OLED-APL-FIXER)**: The OG ReShade APL tracking shader that sparked this entire movement.
+
+**Huge credit where it's due:** The temporal smoothing, BT.2390 tonemapping, and color-preserving math embedded in this shader were adapted directly from the open-source brilliance of MSpeedo and ShanSolox. Go star their repos.
 
 ## How to Install & Use
 
@@ -100,9 +100,13 @@ If you have a colorimeter and HCFR:
 3. Export the sweeps as CSV files named `XX%CAPL.GrayScaleSheet.csv` (e.g., `0%CAPL.GrayScaleSheet.csv`).
 4. Create your monitor's profile folder path: `Profiles/[Manufacturer]/[Model]/[Mode]/Measurements/`.
 5. Place your exported CSVs inside that `Measurements` folder.
-6. Open `process_lut.py` in a text editor and change the `input_dir` variable to the absolute path of your new `Measurements` folder, and the `output_dir` variable to the root of your profile folder.
-7. Run the script to generate your custom `EOTF_Correction_LUT.png`. The LUT will be saved automatically to your profile folder.
+6. Open your terminal or command prompt and navigate to the `Toolkit` folder.
+7. Run the script, pointing it to your measurements and desired output folder: 
+   `python process_lut.py --input "../Profiles/[Manufacturer]/[Model]/[Mode]/Measurements" --output "../Profiles/[Manufacturer]/[Model]/[Mode]"`
+   (The `EOTF_Correction_LUT.png` will be saved automatically to your profile folder).
 
 ---
+
+**Disclaimer:** The code for this project (both the HLSL shader and Python script) was developed with the assistance of Google Gemini.
 
 *This work is licensed under Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International. To view a copy of this license, visit https://creativecommons.org/licenses/by-nc-sa/4.0/*

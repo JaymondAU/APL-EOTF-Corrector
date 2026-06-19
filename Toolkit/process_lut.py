@@ -16,6 +16,8 @@ import imageio.v2 as imageio
 import os
 import glob
 import re
+import argparse
+import sys
 
 # --- ST 2084 (PQ) Math ---
 m1 = 2610 / 16384
@@ -31,8 +33,13 @@ def pq_to_nits(v):
     return ((num / den)**(1/m1)) * 10000.0
 
 # --- Configuration & File Loading ---
-input_dir = "./" 
-output_dir = "./"
+parser = argparse.ArgumentParser(description="Generate EOTF Correction LUT from HCFR sweeps.")
+parser.add_argument("--input", type=str, default="./", help="Directory containing HCFR CSV sweeps.")
+parser.add_argument("--output", type=str, default="./", help="Directory to save the generated LUT.")
+args = parser.parse_args()
+
+input_dir = args.input
+output_dir = args.output
 LUT_SIZE = 1024
 
 # Auto-detect available HCFR Sweeps dynamically
@@ -82,8 +89,8 @@ for apl in apl_levels:
     loaded_apls.append(apl)
 
 if len(apl_curves_generated) == 0:
-    print("Error: No CSV files were loaded! Check your file names.")
-    exit()
+    print(f"Error: No CSV files were loaded! Check your file names in: {os.path.abspath(input_dir)}")
+    sys.exit(1)
 
 # Interpolate vertically
 apl_curves_generated = np.array(apl_curves_generated)
