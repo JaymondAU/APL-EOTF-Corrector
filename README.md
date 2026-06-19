@@ -48,15 +48,15 @@ If you have a different monitor, or wish to profile a different picture mode, yo
 
 ## Massive Shoutouts & Standalone Alternatives
 
-This project literally would not exist without the absolute legends who pioneered APL tracking in ReShade. All four of these developers laid the groundwork that inspired this approach. 
+This project was built on the foundation created by the developers who pioneered APL tracking in ReShade. All four of these individuals laid the groundwork that inspired this approach. 
 
-If you don't have a colorimeter to build hardware-measured LUTs, you owe it to yourself to check out their incredible work. They let you dial in the corrections manually and achieve fantastic results:
+If you don't have a colorimeter to build hardware-measured LUTs, you should check out their work. They let you dial in the corrections manually and achieve great results:
 
-* **[LumaBoost by Valadore](https://github.com/Valadore/LumaBoost)**: An incredible display hardware emulator. You can input your monitor's specific window brightness specs (like the ones from RTINGS) to generate a custom ABL model. It's packed with features for shadow protection, skin-tone masking, and contrast recovery.
-* **[EOTF Boost by MSpeedo](https://github.com/mspeedo/QD-OLED-APL-FIXER) & [ShanSolox](https://github.com/shansolox/QD-OLED-APL-FIXER)**: Brilliant shaders featuring 1D APL lookups, BT.2390 Tonemapping, and color-preserving hue limits. These guys pushed the envelope for mathematical HDR correction.
-* **[EOTF Boost by DespairArdor](https://github.com/DespairArdor/QD-OLED-APL-FIXER)**: The OG ReShade APL tracking shader that sparked this entire movement.
+* **[LumaBoost by Valadore](https://github.com/Valadore/LumaBoost)**: A powerful display hardware emulator. You can input your monitor's specific window brightness specs (like the ones from RTINGS) to generate a custom ABL model. It's packed with features for shadow protection, skin-tone masking, and contrast recovery.
+* **[EOTF Boost by MSpeedo](https://github.com/mspeedo/QD-OLED-APL-FIXER) & [ShanSolox](https://github.com/shansolox/QD-OLED-APL-FIXER)**: Shaders featuring 1D APL lookups, BT.2390 Tonemapping, and color-preserving hue limits. They pioneered mathematical HDR correction in ReShade.
+* **[EOTF Boost by DespairArdor](https://github.com/DespairArdor/QD-OLED-APL-FIXER)**: The original ReShade APL tracking shader.
 
-**Huge credit where it's due:** The temporal smoothing, BT.2390 tonemapping, and color-preserving math embedded in this shader were adapted directly from the open-source brilliance of MSpeedo and ShanSolox. Go star their repos.
+**Credit where it's due:** The temporal smoothing, BT.2390 tonemapping, and color-preserving math embedded in this shader were adapted directly from the open-source work of MSpeedo and ShanSolox. Go star their repos.
 
 ## How to Install & Use
 
@@ -75,7 +75,7 @@ When the ReShade shader is active, it mathematically flattens the monitor's buil
 
 Because the monitor is no longer artificially stretching the incoming signal to reach its physical peak, leaving a standard OS-level calibration active will bottleneck your physical highlight headroom. 
 
-Out of the box, modern monitors handle OS HDR signals unpredictably. Some monitors force you to set a low OS clip point (e.g., ~380 nits for the MO27Q2) and then artificially stretch that signal up to reach their physical peak (such as ~1050 nits for a 1% highlight). Other monitors may allow a high OS clip point (like 1000 nits) but dynamically compress that signal down to whatever their physical ABL limit is (e.g., ~400-600 nits in a 10% window). 
+Out of the box, modern monitors handle OS HDR signals in different ways. Some monitors force you to set a low OS clip point (e.g., ~380 nits for the MO27Q2) and then artificially stretch that signal up to reach their physical peak (such as ~1050 nits for a 1% highlight). Other monitors may allow a high OS clip point (like 1000 nits) but dynamically compress that signal down to whatever their physical ABL limit is (e.g., ~400-600 nits in a 10% window). 
 
 However, when the shader is active, these artificial stretches and compressions are mathematically flattened. If your OS is still capping the game's maximum output signal (such as an artificially low 380 nit calibration limit), the shader will ensure the display never exceeds that OS limit on screen, clipping your physical highlight headroom.
 
@@ -84,7 +84,7 @@ However, when the shader is active, these artificial stretches and compressions 
 
 ### The Fix: Force a 10,000 Nit Container
 
-*(Example for the MO27Q2: Once the display's artificial over-brightening is mathematically flattened, small highlights like this 2% window can accurately track up to 1000 nits. However, if your OS calibration is set to a static limit (like ~380 nits based on the HDR Calibration App), Windows will refuse to send any signal brighter than that, artificially clipping your highlights!)*
+*(Example for the MO27Q2: Once the display's artificial over-brightening is mathematically flattened, small highlights like this 2% window can accurately track up to 1000 nits. However, if your OS calibration is set to a static limit (like ~380 nits based on the HDR Calibration App), Windows will refuse to send any signal brighter than that, artificially clipping your highlights.)*
 ![1000 Nit Highlight Headroom](Profiles/Gigabyte/MO27Q2/HDR%20Peak%201000/Images/1%25Window2%25APL_After.png)
 
 To preserve your display's full dynamic range, you must bypass the OS-level clipping limits. 
