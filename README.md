@@ -38,10 +38,10 @@ Using a LUT designed for one picture mode (such as HDR Peak 1000) while the moni
 
 Out of the box, the MO27Q2 tracks the PQ EOTF curve reasonably well in high APL (average picture level) scenes, but over-brightens the midtones and highlights in low APL (dark) scenes. This LUT attempts to bring the EOTF tracking closer to the PQ reference standard across different APLs. 
 
-*(Example 1 for the MO27Q2: 1% Window at 10% APL, showing severe factory over-brightening vs mathematically flattened tracking)*
+*(Example 1 for the MO27Q2: 1% Window at 10% APL, showing factory over-brightening vs mathematically flattened tracking)*
 ![MO27Q2 10% APL Tracking Correction](Profiles/Gigabyte/MO27Q2/HDR%20Peak%201000/Images/1%25Window10%25CAPL_BEFORE_AND_AFTER.png)
 
-*(Example 2 for the MO27Q2: 1% Window at 50% APL, showing the correction working perfectly up until the MO27Q2's ABL physically limits the peak brightness to ~380 nits)*
+*(Example 2 for the MO27Q2: 1% Window at 50% APL, showing the correction working up until the MO27Q2's ABL physically limits the peak brightness to ~380 nits)*
 ![MO27Q2 50% APL Tracking Correction](Profiles/Gigabyte/MO27Q2/HDR%20Peak%201000/Images/1%25Window50%25CAPL_BEFORE_AND_AFTER.png)
 
 If you have a different monitor, or wish to profile a different picture mode, you can use the included Python toolkit to generate a custom LUT using a colorimeter, and submit it to the repository!
@@ -77,7 +77,7 @@ Because the monitor is no longer artificially stretching the incoming signal to 
 
 Out of the box, modern monitors handle OS HDR signals unpredictably. Some monitors force you to set a low OS clip point (e.g., ~380 nits for the MO27Q2) and then artificially stretch that signal up to reach their physical peak (such as ~1050 nits for a 1% highlight). Other monitors may allow a high OS clip point (like 1000 nits) but dynamically compress that signal down to whatever their physical ABL limit is (e.g., ~400-600 nits in a 10% window). 
 
-However, when the shader is active, these artificial stretches and compressions are mathematically flattened. If your OS is still capping the game's maximum output signal (such as an artificially low 380 nit calibration limit), the shader will ensure the display never exceeds that OS limit on screen, completely destroying your physical highlight headroom!
+However, when the shader is active, these artificial stretches and compressions are mathematically flattened. If your OS is still capping the game's maximum output signal (such as an artificially low 380 nit calibration limit), the shader will ensure the display never exceeds that OS limit on screen, clipping your physical highlight headroom.
 
 *(Example for the MO27Q2: Notice the display's physical ABL limits. While a 10% window limits output to ~470 nits, a smaller 2% window can physically reach 1000 nits. You need to bypass OS limits to allow the game engine to actually send these bright highlight signals to the shader.)*
 ![MO27Q2 2% vs 10% Window ABL Comparison](Profiles/Gigabyte/MO27Q2/HDR%20Peak%201000/Images/2%25vs10%25Window20%25CAPL.png)
@@ -89,7 +89,7 @@ However, when the shader is active, these artificial stretches and compressions 
 
 To preserve your display's full dynamic range, you must bypass the OS-level clipping limits. 
 
-Check your specific monitor's profile folder in this repository—a pre-made 10,000 nit ICC profile (such as `HDR Untouched.icc`) may already be provided for you to install.
+Check your specific monitor's profile folder in this repository to see if a pre-made 10,000 nit ICC profile (such as `HDR Untouched.icc`) is already provided for you to install.
 
 If not, you can create this profile using the [MHC ICC Profile Maker](https://github.com/ttys001/MHC-ICC-Profile-Maker). Create an ICC profile that matches your monitor's EDID, but set both the **Max** and **Max Full Frame Luminance** to **10,000 nits**.
 
