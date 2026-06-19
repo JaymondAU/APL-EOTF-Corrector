@@ -56,7 +56,7 @@ If you don't have a colorimeter to build hardware-measured LUTs, you should chec
 * **[EOTF Boost by MSpeedo](https://github.com/mspeedo/QD-OLED-APL-FIXER) & [ShanSolox](https://github.com/shansolox/QD-OLED-APL-FIXER)**: Shaders featuring 1D APL lookups, BT.2390 Tonemapping, and color-preserving hue limits. They pioneered mathematical HDR correction in ReShade.
 * **[EOTF Boost by DespairArdor](https://github.com/DespairArdor/QD-OLED-APL-FIXER)**: The original ReShade APL tracking shader.
 
-**Credit where it's due:** The temporal smoothing, BT.2390 tonemapping, and color-preserving math embedded in this shader were adapted directly from the open-source work of MSpeedo and ShanSolox. Go star their repos.
+**Credit where it's due:** While this shader uses a different hardware-based MipMap approach, the foundational APL calculation logic, as well as the temporal smoothing, BT.2390 tonemapping, and color-preserving math embedded in this shader, was directly inspired by and adapted from the open-source work of MSpeedo, ShanSolox, and DespairArdor. Go star their repos.
 
 ## How to Install & Use
 
@@ -127,4 +127,9 @@ If you have a colorimeter and HCFR:
 
 **Disclaimer:** The code for this project (both the HLSL shader and Python script) was developed with the assistance of Google Gemini.
 
-*This work is licensed under Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International. To view a copy of this license, visit https://creativecommons.org/licenses/by-nc-sa/4.0/*
+## License
+
+The primary code and mathematical models for this project are licensed under **Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)**. 
+[View License](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+
+Portions of the shader code (BT.2390 Tonemapping, Color-Preserving Hue Limits, and temporal smoothing math) are adapted from open-source works by ShanSolox, MSpeedo, and DespairArdor. Those specific portions remain under the **MIT License**. See the header of `APL_EOTF_Corrector.fx` for the full MIT license text and copyright notices.
