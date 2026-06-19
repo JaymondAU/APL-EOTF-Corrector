@@ -269,8 +269,8 @@ float ApplyBT2390EETFToPQWithShape(float inputPQ, float sourcePeakNits, float ta
 texture TexCorrectionLUT < source = "EOTF_Correction_LUT.png"; > { Width = 1024; Height = 1024; Format = RGBA8; SRGB = false; };
 sampler SamplerLUT { Texture = TexCorrectionLUT; MinFilter = LINEAR; MagFilter = LINEAR; AddressU = CLAMP; AddressV = CLAMP; };
 
-texture TexPostPQLuma { Width = 1024; Height = 1024; Format = R16F; MipLevels = 11; };
-sampler SamplerPostPQLuma { Texture = TexPostPQLuma; MinFilter = LINEAR; MagFilter = LINEAR; MipFilter = LINEAR; };
+texture TexPostLinearLuma { Width = 1024; Height = 1024; Format = R16F; MipLevels = 11; };
+sampler SamplerPostLinearLuma { Texture = TexPostLinearLuma; MinFilter = LINEAR; MagFilter = LINEAR; MipFilter = LINEAR; };
 
 texture TexAPL { Width = 1; Height = 1; Format = R16F; };
 sampler SamplerAPL { Texture = TexAPL; MinFilter = POINT; MagFilter = POINT; };
@@ -345,38 +345,39 @@ void PS_ApplyCorrection(float4 pos : SV_Position, float2 texcoord : TEXCOORD, ou
     output = DebugAPL ? float4(current_state_apl.xxx, 1.0) : final_color;
 }
 
-// Pass 3: Convert the corrected BackBuffer to PQ Luma and generate Hardware MipMaps
-void PS_StorePQLuma(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float pq_luma_out : SV_Target)
+// Pass 3: Convert the corrected BackBuffer to Linear Luma and generate Hardware MipMaps
+void PS_StoreLinearLuma(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float lin_luma_out : SV_Target)
 {
     float4 color = tex2D(ReShade::BackBuffer, texcoord);
     
     if (APLInputMode == 1)
     {
         float3 lin_rgb = pq_to_linear(color.rgb);
-        float lin_luma = dot(lin_rgb, float3(0.2627, 0.6780, 0.0593));
-        pq_luma_out = linear_to_pq_scalar(lin_luma); 
+        lin_luma_out = dot(lin_rgb, float3(0.2627, 0.6780, 0.0593));
     }
     else
     {
         float3 lin_rgb = color.rgb * (SIGNAL_REFERENCE_NITS / 10000.0);
         float3 luma_coeffs = float3(0.2126, 0.7152, 0.0722);
-        pq_luma_out = linear_to_pq_scalar(dot(lin_rgb, luma_coeffs));
+        lin_luma_out = dot(lin_rgb, luma_coeffs);
     }
 }
 
 // Pass 4: Calculate Closed-Loop APL (Manual Temporal Blend using separate Attack/Release times)
 void PS_CalculateAPL(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float apl_out : SV_Target)
 {
-    float new_hardware_apl = tex2Dlod(SamplerPostPQLuma, float4(0.5, 0.5, 0, 10.0)).r;
+    float new_hardware_lin_apl = tex2Dlod(SamplerPostLinearLuma, float4(0.5, 0.5, 0, 10.0)).r;
+    float new_hardware_pq_apl = linear_to_pq_scalar(new_hardware_lin_apl);
+    
     float previous_apl = tex2D(SamplerAPL_Prev, float2(0.5, 0.5)).r;
     
     // Choose Attack or Release speed based on whether the screen is getting brighter or darker
-    float target_smoothing_ms = (new_hardware_apl > previous_apl) ? ABL_Attack_Time : ABL_Release_Time;
+    float target_smoothing_ms = (new_hardware_pq_apl > previous_apl) ? ABL_Attack_Time : ABL_Release_Time;
     
     // Framerate Independent Exponential Moving Average
     float blend_alpha = (target_smoothing_ms <= 0.0) ? 1.0 : 1.0 - exp(-FrameTime / target_smoothing_ms);
     
-    apl_out = lerp(previous_apl, new_hardware_apl, blend_alpha);
+    apl_out = lerp(previous_apl, new_hardware_pq_apl, blend_alpha);
 }
 
 // =========================================================================
@@ -398,11 +399,11 @@ technique QDOLED_EOTF_LUT_Fix
         PixelShader = PS_ApplyCorrection;
     }
     
-    pass StorePQLuma
+    pass StoreLinearLuma
     {
         VertexShader = PostProcessVS;
-        PixelShader = PS_StorePQLuma;
-        RenderTarget = TexPostPQLuma;
+        PixelShader = PS_StoreLinearLuma;
+        RenderTarget = TexPostLinearLuma;
         GenerateMipMaps = true;
     }
     

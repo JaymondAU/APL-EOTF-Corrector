@@ -44,8 +44,8 @@ LUT_SIZE = 1024
 
 # Auto-detect available HCFR Sweeps dynamically
 file_dict = {}
-for filepath in glob.glob(os.path.join(input_dir, "*%CAPL.GrayScaleSheet.csv")):
-    match = re.search(r'(\d+)%CAPL', os.path.basename(filepath))
+for filepath in glob.glob(os.path.join(input_dir, "*%*APL.GrayScaleSheet.csv")):
+    match = re.search(r'(\d+)%C?APL', os.path.basename(filepath))
     if match:
         file_dict[int(match.group(1))] = filepath
 
