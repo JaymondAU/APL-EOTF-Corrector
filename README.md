@@ -24,6 +24,24 @@ This workaround is not a perfect solution:
 * **APL Only:** The shader and script currently only address APL-dependent tracking anomalies. It does not resolve window-size-dependent brightness constraints (such as the display's physical ABL capping full-screen white levels). 
 * **Bypassing OS Limits:** Because the shader flattens the display's internal boost, you must bypass the operating system's standard HDR calibration pipeline, which is detailed in the sections below.
 
+## How It Works
+
+This project consists of two core components working in tandem: a Python script to analyze your monitor's behavior, and a ReShade shader to correct it in real-time.
+
+1. **The 2D LUT Generation (The Python Script)**
+   Using a colorimeter and calibration software like HCFR, you run EOTF tracking sweeps at various APL levels (e.g., 0%, 5%, 10%, 50%, 100%). You feed these raw CSV measurements into the included Python script. 
+   The script does not simply subtract the difference; it performs a **reverse mapping**. For every possible target luminance (nits) at every APL level, it asks the data: *"What PQ signal do I actually need to send to the monitor to force it to output this exact target luminance?"* 
+   Because you can only manually measure a limited number of test patterns, the script uses a Piecewise Cubic Hermite Interpolating Polynomial (`PchipInterpolator`) to mathematically fill in the gaps. It interpolates smoothly across the luminance axis, and then vertically across the APL axis. This specific interpolation method is crucial because it strictly preserves monotonicity—meaning it guarantees the generated correction curve will never artificially overshoot, dip, or create sudden brightness artifacts.
+   It packs all of this math into a single 1024x1024 2D Lookup Table (`EOTF_Correction_LUT.png`). The X-axis represents the target signal brightness, and the Y-axis represents the current APL.
+
+2. **Hardware MipMap APL Calculation (The Shader)**
+   To know how much a monitor is artificially boosting or dimming a scene, the shader must first understand the scene's overall brightness, known as the Average Picture Level (APL).
+   Instead of using computationally expensive loops to average the screen pixels, the shader leverages GPU hardware MipMapping. It converts the frame's luminance into a linear light scale (absolute physical nits), and uses the GPU's texture sampling hardware to instantly average the entire screen down to a single 1x1 pixel. This perfectly mirrors the mathematical linear light logic that professional calibration software uses to trigger a monitor's physical Auto Brightness Limiter (ABL), ensuring the shader and your monitor's power supply are speaking the exact same mathematical language.
+
+3. **Real-Time Correction & Temporal Feedback (The Result)**
+   While you play a game, the shader calculates the linear APL and uses it alongside the game's intended pixel brightness to pull the exact, pre-calculated reverse-mapped PQ signal from the 2D LUT.
+   Because altering the brightness of the pixels inherently changes the APL of the screen (which could cause an infinite feedback loop of flickering), the shader implements a **temporal feedback loop**. It calculates the APL of the *corrected* image and blends it with the previous frame's APL using a framerate-independent exponential moving average. Separate attack and release speeds smooth out APL transitions and ensure the correction always reaches a steady state without flickering or hunting.
+
 ## Included Profiles
 
 The `Profiles` folder contains display-specific EOTF Correction LUTs, separated by manufacturer, model, and picture mode. 
