@@ -38,6 +38,12 @@ Using a LUT designed for one picture mode (such as HDR Peak 1000) while the moni
 
 Out of the box, the MO27Q2 tracks the PQ EOTF curve reasonably well in high APL (average picture level) scenes, but over-brightens the midtones and highlights in low APL (dark) scenes. This LUT attempts to bring the EOTF tracking closer to the PQ reference standard across different APLs. 
 
+*(Example 1 for the MO27Q2: 1% Window at 10% APL, showing severe factory over-brightening vs mathematically flattened tracking)*
+![MO27Q2 10% APL Tracking Correction](<Profiles/Gigabyte/MO27Q2/HDR Peak 1000/Images/1%Window10%CAPL_BEFORE_AND_AFTER.png>)
+
+*(Example 2 for the MO27Q2: 1% Window at 50% APL, showing the correction working perfectly up until the MO27Q2's ABL physically limits the peak brightness to ~380 nits)*
+![MO27Q2 50% APL Tracking Correction](<Profiles/Gigabyte/MO27Q2/HDR Peak 1000/Images/1%Window50%CAPL_BEFORE_AND_AFTER.png>)
+
 If you have a different monitor, or wish to profile a different picture mode, you can use the included Python toolkit to generate a custom LUT using a colorimeter, and submit it to the repository!
 
 ## Massive Shoutouts & Standalone Alternatives
@@ -67,15 +73,25 @@ If you don't have a colorimeter to build hardware-measured LUTs, you owe it to y
 
 When the ReShade shader is active, it mathematically flattens the monitor's built-in over-brightening. This forces the display to track the PQ curve closer to reference and behave like a standard hard-clipping monitor. 
 
-Because the monitor is no longer artificially stretching the incoming signal to reach its physical peak, leaving a standard OS-level calibration active will limit your physical highlight headroom. 
+Because the monitor is no longer artificially stretching the incoming signal to reach its physical peak, leaving a standard OS-level calibration active will bottleneck your physical highlight headroom. 
 
-For example, if you calibrated the Windows HDR Calibration App using its static 10% window, the OS limits the game engine's maximum signal output to what your display can physically output at that larger window size. Without the monitor's built-in over-brightening to stretch that capped signal back up, your small peak highlights (which are physically capable of reaching much higher luminance levels in dark scenes) will be capped at the lower 10% window limit.
+Out of the box, modern monitors handle OS HDR signals unpredictably. Some monitors force you to set a low OS clip point (e.g., ~380 nits for the MO27Q2) and then artificially stretch that signal up to reach their physical peak (such as ~1050 nits for a 1% highlight). Other monitors may allow a high OS clip point (like 1000 nits) but dynamically compress that signal down to whatever their physical ABL limit is (e.g., ~400-600 nits in a 10% window). 
+
+However, when the shader is active, these artificial stretches and compressions are mathematically flattened. If your OS is still capping the game's maximum output signal (such as an artificially low 380 nit calibration limit), the shader will ensure the display never exceeds that OS limit on screen, completely destroying your physical highlight headroom!
+
+*(Example for the MO27Q2: Notice the display's physical ABL limits. While a 10% window limits output to ~470 nits, a smaller 2% window can physically reach 1000 nits. You need to bypass OS limits to allow the game engine to actually send these bright highlight signals to the shader.)*
+![MO27Q2 2% vs 10% Window ABL Comparison](<Profiles/Gigabyte/MO27Q2/HDR Peak 1000/Images/2%vs10%Window20%CAPL.png>)
 
 ### The Fix: Force a 10,000 Nit Container
 
-To preserve your display's full dynamic range, you must bypass the OS-level clipping limits. This can be done using the [MHC ICC Profile Maker](https://github.com/ttys001/MHC-ICC-Profile-Maker).
+*(Example for the MO27Q2: Once the display's artificial over-brightening is mathematically flattened, small highlights like this 2% window can accurately track up to 1000 nits. However, if your OS calibration is set to a static limit (like ~380 nits based on the HDR Calibration App), Windows will refuse to send any signal brighter than that, artificially clipping your highlights!)*
+![1000 Nit Highlight Headroom](<Profiles/Gigabyte/MO27Q2/HDR Peak 1000/Images/1%Window2%APL_After.png>)
 
-Create an ICC profile that matches your monitor's EDID, but set both the **Max** and **Max Full Frame Luminance** to **10,000 nits**.
+To preserve your display's full dynamic range, you must bypass the OS-level clipping limits. 
+
+Check your specific monitor's profile folder in this repository—a pre-made 10,000 nit ICC profile (such as `HDR Untouched.icc`) may already be provided for you to install.
+
+If not, you can create this profile using the [MHC ICC Profile Maker](https://github.com/ttys001/MHC-ICC-Profile-Maker). Create an ICC profile that matches your monitor's EDID, but set both the **Max** and **Max Full Frame Luminance** to **10,000 nits**.
 
 This configuration tells Windows and your games that the display has unlimited HDR headroom, preventing the OS from pre-compressing or clipping the signal. The raw, untampered HDR signal is then passed directly to the ReShade shader to handle the mathematical corrections.
 
@@ -91,6 +107,8 @@ A Python script (`process_lut.py`) is included in the `Toolkit` folder.
 `pip install numpy pandas scipy imageio`
 
 If you have a colorimeter and HCFR:
+
+* **A Note on Spectral Corrections (CCSS):** For the highest accuracy, ensure you are using an appropriate spectral correction file (like a CCSS) in HCFR for your specific panel technology (e.g., QD-OLED, WOLED), assuming your colorimeter requires one.
 
 1. Use madTPG (included with madVR) or your preferred test pattern generator.
 2. Run a sweep of CAPL tests. For the best interpolation results, keep these rules in mind:
