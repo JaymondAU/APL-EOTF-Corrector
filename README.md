@@ -15,7 +15,9 @@ The default LUT in this repository is configured specifically for the Gigabyte M
 
 The primary goal of this project is to build a community-driven database of display-specific LUTs. If you own a colorimeter and choose to profile your display's tracking:
 1. Run the sweeps and generate a LUT using the included Python script.
-2. Submit a Pull Request with your custom LUT and the raw measurement CSVs.
+2. Structure your files in the `Profiles` directory following this format: `Profiles/[Manufacturer]/[Model]/[Mode]/`. 
+3. Place your raw measurement CSVs inside a `Measurements/` subfolder, and the final generated `EOTF_Correction_LUT.png` in the root of your mode folder. Include a `README.md` detailing the required monitor OSD settings.
+4. Submit a Pull Request to this repository with your custom profile.
 
 Over time, this repository can become a shared library of EOTF correction LUTs, allowing people who do not own colorimeters to easily correct their specific monitors.
 
@@ -24,19 +26,21 @@ This workaround is not a perfect solution:
 * **APL Only:** The shader and script currently only address APL-dependent tracking anomalies. It does not resolve window-size-dependent brightness constraints (such as the display's physical ABL capping full-screen white levels). 
 * **Bypassing OS Limits:** Because the shader flattens the display's internal boost, you must bypass the operating system's standard HDR calibration pipeline, which is detailed in the sections below.
 
-## The Included LUT (Gigabyte MO27Q2 QD-OLED)
+## Included Profiles
 
-The default `Gigabyte_MO27Q2_EOTF_Correction_LUT.png` provided in this repository is calibrated specifically for the **Gigabyte MO27Q2** under the following precise conditions:
+The `Profiles` folder contains display-specific EOTF Correction LUTs, separated by manufacturer, model, and picture mode. 
+
+For example, the default `EOTF_Correction_LUT.png` provided for the **Gigabyte MO27Q2** is located in `Profiles/Gigabyte/MO27Q2/HDR Peak 1000/`. It was calibrated under the following precise conditions:
 
 * **Picture Mode:** HDR Peak 1000
 * **Dark Enhance:** OFF
 * All other relevant monitor settings are left at their factory defaults.
 
-Using this LUT in other picture modes (such as the HDR mode with APL Stabilize set to High) or on different monitors will not produce accurate tracking.
+Using a LUT designed for one picture mode (such as HDR Peak 1000) while the monitor is set to a different mode (such as HDR+APL High), or using it on a completely different monitor, will not produce accurate tracking.
 
 Out of the box, the MO27Q2 tracks the PQ EOTF curve reasonably well in high APL (average picture level) scenes, but over-brightens the midtones and highlights in low APL (dark) scenes. This LUT attempts to bring the EOTF tracking closer to the PQ reference standard across different APLs. 
 
-If you have a different monitor, or wish to profile a different picture mode, you can use the included Python toolkit to generate a custom LUT using a colorimeter. I used an X-Rite i1 Display Pro to capture my measurements.
+If you have a different monitor, or wish to profile a different picture mode, you can use the included Python toolkit to generate a custom LUT using a colorimeter, and submit it to the repository!
 
 ## Alternatives and Credits
 
@@ -53,8 +57,8 @@ Credit to these developers: the temporal smoothing, BT.2390 tonemapping, and col
 1. Install [ReShade](https://reshade.me/) to your game.
 2. Download this repository.
 3. Place `APL_EOTF_Corrector.fx` into your game's `reshade-shaders\Shaders` folder.
-4. Rename `Gigabyte_MO27Q2_EOTF_Correction_LUT.png` to exactly **`EOTF_Correction_LUT.png`**.
-5. Place this renamed image into your game's `reshade-shaders\Textures` folder.
+4. Navigate to the `Profiles` folder and find the specific `EOTF_Correction_LUT.png` generated for your exact monitor and picture mode.
+5. Place this image into your game's `reshade-shaders\Textures` folder.
 6. Launch the game and open the ReShade menu.
 7. Enable **APL_EOTF_Corrector**. Make sure it is placed at the **very bottom** of your active effect list so it applies after all other effects.
 8. Make sure the `APL Input Mode` in the shader settings matches your game's HDR format (PQ/HDR10 or scRGB). (Note: If using scRGB, leave the `scRGB Signal Reference` at 80 for most games, but adjust it if the midtones look completely washed out).
@@ -93,10 +97,11 @@ If you have a colorimeter and HCFR:
    * You **must** run a sweep on a black background to stand in as 0% APL.
    * You **must** run a sweep on a white background to stand in as 100% APL.
    * Run the sweeps with the smallest window size you can (such as a 1% window).
-3. Export the sweeps as CSV files named `XX%CAPL.GrayScaleSheet.csv`.
-4. Place the CSVs in the same folder as the Python script.
-5. Open `process_lut.py` in a text editor and edit the `apl_levels` array to reflect the exact APL percentages you tested.
-6. Run the script to generate your custom `EOTF_Correction_LUT.png`. (Example calibration data is provided in the `Data` folder to show the expected format).
+3. Export the sweeps as CSV files named `XX%CAPL.GrayScaleSheet.csv` (e.g., `0%CAPL.GrayScaleSheet.csv`).
+4. Create your monitor's profile folder path: `Profiles/[Manufacturer]/[Model]/[Mode]/Measurements/`.
+5. Place your exported CSVs inside that `Measurements` folder.
+6. Open `process_lut.py` in a text editor and change the `input_dir` variable to the absolute path of your new `Measurements` folder, and the `output_dir` variable to the root of your profile folder.
+7. Run the script to generate your custom `EOTF_Correction_LUT.png`. The LUT will be saved automatically to your profile folder.
 
 ---
 

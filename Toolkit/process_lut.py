@@ -31,12 +31,13 @@ def pq_to_nits(v):
     return ((num / den)**(1/m1)) * 10000.0
 
 # --- Configuration & File Loading ---
-csv_folder = "./" 
+input_dir = "./" 
+output_dir = "./"
 LUT_SIZE = 1024
 
 # Auto-detect available HCFR Sweeps dynamically
 file_dict = {}
-for filepath in glob.glob(os.path.join(csv_folder, "*%CAPL.GrayScaleSheet.csv")):
+for filepath in glob.glob(os.path.join(input_dir, "*%CAPL.GrayScaleSheet.csv")):
     match = re.search(r'(\d+)%CAPL', os.path.basename(filepath))
     if match:
         file_dict[int(match.group(1))] = filepath
@@ -101,7 +102,8 @@ lut_image_rgb[:,:,0] = (lut_image_16bit >> 8) & 0xFF  # Red channel = High byte
 lut_image_rgb[:,:,1] = lut_image_16bit & 0xFF         # Green channel = Low byte
 lut_image_rgb[:,:,2] = 0                              # Blue channel = Unused
 
-imageio.imwrite("EOTF_Correction_LUT.png", lut_image_rgb)
+output_path = os.path.join(output_dir, "EOTF_Correction_LUT.png")
+imageio.imwrite(output_path, lut_image_rgb)
 
 print("===================================================")
 print("SUCCESS: EOTF_Correction_LUT.png has been created!")

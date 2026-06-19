@@ -357,8 +357,8 @@ void PS_StorePQLuma(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out fl
     else
     {
         float3 lin_rgb = color.rgb * (SIGNAL_REFERENCE_NITS / 10000.0);
-        float lin_luma = dot(lin_rgb, float3(0.2126, 0.7152, 0.0722));
-        pq_luma_out = linear_to_pq_scalar(lin_luma);
+        float3 luma_coeffs = float3(0.2126, 0.7152, 0.0722);
+        pq_luma_out = linear_to_pq_scalar(dot(lin_rgb, luma_coeffs));
     }
 }
 
