@@ -32,7 +32,7 @@ This project consists of two core components working in tandem: a Python script 
    Using a colorimeter and calibration software like HCFR, you run EOTF tracking sweeps at various APL levels (e.g., 0%, 5%, 10%, 50%, 100%). You feed these raw CSV measurements into the included Python script. 
    The script does not simply subtract the difference; it performs a **reverse mapping**. For every possible target luminance (nits) at every APL level, it asks the data: *"What PQ signal do I actually need to send to the monitor to force it to output this exact target luminance?"* 
    Because you can only manually measure a limited number of test patterns, the script uses a Piecewise Cubic Hermite Interpolating Polynomial (`PchipInterpolator`) to mathematically fill in the gaps. It interpolates smoothly across the luminance axis, and then vertically across the APL axis. This specific interpolation method is crucial because it strictly preserves monotonicity—meaning it guarantees the generated correction curve will never artificially overshoot, dip, or create sudden brightness artifacts.
-   Finally, to prevent the notorious color banding that plagues standard 8-bit LUTs in HDR, the script packs the data using a **16-bit precision split**. It calculates the exact 16-bit floating point correction value and splits it across the Red and Green channels of a standard 8-bit PNG, ensuring flawless gradient tracking inside ReShade.
+   Finally, to prevent the notorious color banding that plagues standard 8-bit LUTs in HDR, the script packs the data using a **16-bit precision split**. It calculates the exact 16-bit integer correction value and splits it across the Red and Green channels of a standard 8-bit PNG, ensuring flawless gradient tracking inside ReShade.
 
 2. **Hardware MipMap APL Calculation (The Shader)**
    To know how much a monitor is artificially boosting or dimming a scene, the shader must first understand the scene's overall brightness, known as the Average Picture Level (APL).
@@ -58,11 +58,17 @@ Using a LUT designed for one picture mode (such as HDR Peak 1000) while the moni
 
 Out of the box, the MO27Q2 tracks the PQ EOTF curve reasonably well in high APL (average picture level) scenes, but over-brightens the midtones and highlights in low APL (dark) scenes. This LUT attempts to bring the EOTF tracking closer to the PQ reference standard across different APLs. 
 
-*(Example 1 for the MO27Q2: 1% Window at 10% APL, showing factory over-brightening vs mathematically flattened tracking)*
-![MO27Q2 10% APL Tracking Correction](Profiles/Gigabyte/MO27Q2/HDR%20Peak%201000/Images/1%25Window10%25CAPL_BEFORE_AND_AFTER.png)
+*(Example 1 for the MO27Q2: 0% APL Black Background, showing flawless tracking across the entire brightness curve until reaching the physical 1000 nit hardware clip)*
+![MO27Q2 0% APL Tracking Correction](Profiles/Gigabyte/MO27Q2/HDR%20Peak%201000/Images/1%25Window0%25APL_BEFORE_AND_AFTER.png)
 
-*(Example 2 for the MO27Q2: 1% Window at 50% APL, showing the correction working up until the MO27Q2's ABL physically limits the peak brightness to ~380 nits)*
-![MO27Q2 50% APL Tracking Correction](Profiles/Gigabyte/MO27Q2/HDR%20Peak%201000/Images/1%25Window50%25CAPL_BEFORE_AND_AFTER.png)
+*(Example 2 for the MO27Q2: 10% APL, demonstrating the massive flattening of the factory over-brightened midtones down to reference standard)*
+![MO27Q2 10% APL Tracking Correction](Profiles/Gigabyte/MO27Q2/HDR%20Peak%201000/Images/1%25Window10%25APL_BEFORE_AND_AFTER.png)
+
+*(Example 3 for the MO27Q2: 50% APL, showing crushed shadows being accurately lifted and highlights clipping at the ABL's ~300 nit hardware limit)*
+![MO27Q2 50% APL Tracking Correction](Profiles/Gigabyte/MO27Q2/HDR%20Peak%201000/Images/1%25Window50%25APL_BEFORE_AND_AFTER.png)
+
+*(Example 4 for the MO27Q2: 100% APL White Background, showing the entire crushed EOTF curve being pushed upward to perfectly track reference standards up to the ~200 nit physical peak)*
+![MO27Q2 100% APL Tracking Correction](Profiles/Gigabyte/MO27Q2/HDR%20Peak%201000/Images/1%25Window100%25APL_BEFORE_AND_AFTER.png)
 
 If you have a different monitor, or wish to profile a different picture mode, you can use the included Python toolkit to generate a custom LUT using a colorimeter, and submit it to the repository!
 
@@ -97,15 +103,12 @@ Because the monitor is no longer artificially stretching the incoming signal to 
 
 Out of the box, modern monitors handle OS HDR signals in different ways. Some monitors force you to set a low OS clip point (e.g., ~380 nits for the MO27Q2) and then artificially stretch that signal up to reach their physical peak (such as ~1050 nits for a 1% highlight). Other monitors may allow a high OS clip point (like 1000 nits) but dynamically compress that signal down to whatever their physical ABL limit is (e.g., ~400-600 nits in a 10% window). 
 
-However, when the shader is active, these artificial stretches and compressions are mathematically flattened. If your OS is still capping the game's maximum output signal (such as an artificially low 380 nit calibration limit), the shader will ensure the display never exceeds that OS limit on screen, clipping your physical highlight headroom.
-
-*(Example for the MO27Q2: Notice the display's physical ABL limits. While a 10% window limits output to ~470 nits, a smaller 2% window can physically reach 1000 nits. You need to bypass OS limits to allow the game engine to actually send these bright highlight signals to the shader.)*
-![MO27Q2 2% vs 10% Window ABL Comparison](Profiles/Gigabyte/MO27Q2/HDR%20Peak%201000/Images/2%25vs10%25Window20%25CAPL.png)
+However, when the shader is active, these artificial stretches and compressions are mathematically flattened. If your game engine relies on the OS calibration profile to set its peak brightness (such as an artificially low 380 nit limit), the game will never render highlights brighter than that limit, artificially clipping your physical highlight headroom.
 
 ### The Fix: Force a 10,000 Nit Container
 
-*(Example for the MO27Q2: Once the display's artificial over-brightening is mathematically flattened, small highlights like this 2% window can accurately track up to 1000 nits. However, if your OS calibration is set to a static limit (like ~380 nits based on the HDR Calibration App), Windows will refuse to send any signal brighter than that, artificially clipping your highlights.)*
-![1000 Nit Highlight Headroom](Profiles/Gigabyte/MO27Q2/HDR%20Peak%201000/Images/1%25Window2%25APL_After.png)
+*(Example for the MO27Q2: Once the display's artificial over-brightening is mathematically flattened, small highlights at low APLs can accurately track up to 1000 nits. However, if your game relies on a standard OS calibration profile with a low peak luminance (like ~380 nits based on the HDR Calibration App), the game engine will limit its maximum output, artificially clipping your highlights before they even reach the shader.)*
+![1000 Nit Highlight Headroom](Profiles/Gigabyte/MO27Q2/HDR%20Peak%201000/Images/1%25Window10%25APL_AFTER.png)
 
 To preserve your display's full dynamic range, you must bypass the OS-level clipping limits. 
 
@@ -113,7 +116,7 @@ Check your specific monitor's profile folder in this repository to see if a pre-
 
 If not, you can create this profile using the [MHC ICC Profile Maker](https://github.com/ttys001/MHC-ICC-Profile-Maker). Create an ICC profile that matches your monitor's EDID, but set both the **Max** and **Max Full Frame Luminance** to **10,000 nits**.
 
-This configuration tells Windows and your games that the display has unlimited HDR headroom, preventing the OS from pre-compressing or clipping the signal. The raw, untampered HDR signal is then passed directly to the ReShade shader to handle the mathematical corrections.
+This configuration tells your games and AutoHDR that the display has unlimited HDR headroom, preventing them from pre-compressing or clipping the signal. The raw, untampered HDR signal is then passed directly to the ReShade shader to handle the mathematical corrections.
 
 **Note:** Some modern games rely on the Windows ICC profile to automatically configure their internal HDR settings. For those titles, the in-game peak brightness slider will default to 10,000 nits. You will need to manually adjust the in-game peak brightness slider (or equivalent settings in tools like RenoDX or SpecialK) down to your display's actual physical peak limit. 
 

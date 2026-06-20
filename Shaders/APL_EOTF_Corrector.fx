@@ -269,13 +269,13 @@ float ApplyBT2390EETFToPQWithShape(float inputPQ, float sourcePeakNits, float ta
 texture TexCorrectionLUT < source = "EOTF_Correction_LUT.png"; > { Width = 1024; Height = 1024; Format = RGBA8; SRGB = false; };
 sampler SamplerLUT { Texture = TexCorrectionLUT; MinFilter = LINEAR; MagFilter = LINEAR; AddressU = CLAMP; AddressV = CLAMP; };
 
-texture TexPostLinearLuma { Width = 1024; Height = 1024; Format = R16F; MipLevels = 11; };
+texture TexPostLinearLuma { Width = 1024; Height = 1024; Format = R32F; MipLevels = 11; };
 sampler SamplerPostLinearLuma { Texture = TexPostLinearLuma; MinFilter = LINEAR; MagFilter = LINEAR; MipFilter = LINEAR; };
 
-texture TexAPL { Width = 1; Height = 1; Format = R16F; };
+texture TexAPL { Width = 1; Height = 1; Format = R32F; };
 sampler SamplerAPL { Texture = TexAPL; MinFilter = POINT; MagFilter = POINT; };
 
-texture TexAPL_Prev { Width = 1; Height = 1; Format = R16F; };
+texture TexAPL_Prev { Width = 1; Height = 1; Format = R32F; };
 sampler SamplerAPL_Prev { Texture = TexAPL_Prev; MinFilter = POINT; MagFilter = POINT; };
 
 // =========================================================================
