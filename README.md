@@ -5,7 +5,7 @@
 ![Python 3.8+](https://img.shields.io/badge/Python-3.8%2B-yellow.svg)
 ![OS: Windows](https://img.shields.io/badge/OS-Windows-blue.svg)
 
-A 2D LUT-based ReShade shader and Python toolkit designed to override forced display dimming and correct APL-dependent HDR EOTF tracking errors. Take control of your monitor's tone mapping.
+A 2D LUT-based ReShade shader and Python toolkit designed to correct APL-dependent PQ EOTF tracking anomalies, handling both forced dimming and over-brightening from the display. A tool to help bring display tone mapping closer to reference standards.
 
 *(Example: Gigabyte MO27Q2 at 10% APL, flattening the factory over-brightened midtones down to reference standard)*
 ![MO27Q2 10% APL Tracking Correction](Profiles/Gigabyte/MO27Q2/HDR%20Peak%201000/Images/1%25Window10%25APL_BEFORE_AND_AFTER.png)
@@ -56,6 +56,7 @@ Profiles/
 This workaround is not a perfect solution:
 * **APL Only:** The shader and script currently only address APL-dependent tracking anomalies. It does not resolve window-size-dependent brightness constraints (such as the display's physical ABL capping full-screen white levels). 
 * **Bypassing OS Limits:** Because the shader flattens the display's internal boost, you must bypass the operating system's standard HDR calibration pipeline (detailed below).
+* **PC Applications Only:** Because this relies on ReShade, it only applies to PC games and applications where ReShade can successfully hook into the rendering pipeline. It cannot correct native streaming apps (like Netflix for Windows) or console inputs.
 
 ---
 
@@ -93,7 +94,7 @@ The default `EOTF_Correction_LUT.png` is provided for the **Gigabyte MO27Q2**, l
 * **Dark Enhance:** OFF
 * Factory defaults for everything else.
 
-*(Example 1: 0% APL Black Background. Flawless tracking up to the 1000 nit hardware clip)*
+*(Example 1: 0% APL Black Background. Corrected tracking up to the 1000 nit hardware limit)*
 ![MO27Q2 0% APL Tracking Correction](Profiles/Gigabyte/MO27Q2/HDR%20Peak%201000/Images/1%25Window0%25APL_BEFORE_AND_AFTER.png)
 
 *(Example 2: 50% APL. Crushed shadows are accurately lifted, clipping at the ABL's ~300 nit hardware limit)*
@@ -142,7 +143,7 @@ A Python script (`process_lut.py`) is included in the `Toolkit` folder.
 
 **Prerequisites:** 
 * Python 3.8+
-* Install dependencies: `pip install numpy pandas scipy imageio`
+* Install dependencies: `pip install -r requirements.txt`
 * A colorimeter and HCFR (*Note: Use an appropriate spectral correction file/CCSS for your panel technology*).
 
 **Instructions:**
