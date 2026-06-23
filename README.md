@@ -79,8 +79,8 @@ To know how much a monitor is artificially boosting or dimming a scene, the shad
 
 ### 3. Real-Time Correction & Temporal Feedback (The Result)
 While you play, the shader pulls the exact, pre-calculated reverse-mapped PQ signal from your custom 2D LUT.
-* **Color Preservation:** The shader multiplies RGB vectors by a calculated scale factor. This alters brightness while mathematically preserving the exact hue and saturation. An optional limit prevents this scale factor from pushing colors past the monitor's physical peak to prevent discoloration.
-* **BT.2390 EETF Tonemapping:** If the corrected signal exceeds the monitor's physical peak brightness, an optional tonemapping pass mathematically compresses the highlights into a smooth "roll-off" to preserve detail instead of hard-clipping.
+* **BT.2390 EETF Tonemapping:** Before correction, an optional tonemapping pass mathematically compresses extreme highlights into a smooth "roll-off" to safely fit the game's unbounded signal into your monitor's physical capabilities. *(Note: This should only be used if the game lacks a functional peak brightness slider or a RenoDX mod to manage its own highlights.)*
+* **Color Preservation:** The shader multiplies RGB vectors by a calculated scale factor to alter brightness while preserving hue and saturation. An optional limit (which now mathematically clamps BT.2020 color boundaries in scRGB mode) prevents this scale factor from pushing colors past the monitor's physical peak to prevent discoloration.
 * **Temporal Feedback Loop:** Altering brightness inherently changes the APL, which could cause infinite flickering. The shader calculates the APL of the *corrected* image and blends it with the previous frame's APL using separate attack and release speeds to ensure smooth transitions.
 
 ---

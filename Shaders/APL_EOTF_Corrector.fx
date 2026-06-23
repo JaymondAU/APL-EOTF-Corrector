@@ -128,7 +128,7 @@ uniform bool EnableTonemapping <
     ui_spacing = 1;
     ui_category = "BT.2390 Tonemapping (Optional)";
     ui_label = "Enable Tonemapping";
-    ui_tooltip = "Smoothly compresses highlights. Mostly unnecessary since the HCFR LUT inherently respects dynamic peak limits.";
+    ui_tooltip = "Smoothly compresses highlights. Only use this if the game lacks a peak brightness slider or RenoDX mod to manage its own highlights.";
 > = false;
 
 uniform float TM_InputPeak <
@@ -164,6 +164,12 @@ static const float m2 = (2523.0 / 4096.0) * 128.0;
 static const float c1 = 3424.0 / 4096.0;
 static const float c2 = (2413.0 / 4096.0) * 32.0;
 static const float c3 = (2392.0 / 4096.0) * 32.0;
+
+static const float3x3 sRGB_2_BT2020 = float3x3(
+    0.6274040, 0.3292820, 0.0433136,
+    0.0690970, 0.9195400, 0.0113612,
+    0.0163916, 0.0880132, 0.8955950
+);
 
 static const float PQ_BLACK = 7.309559025783966e-07;
 
@@ -269,8 +275,8 @@ float ApplyBT2390EETFToPQWithShape(float inputPQ, float sourcePeakNits, float ta
 texture TexCorrectionLUT < source = "EOTF_Correction_LUT.png"; > { Width = 1024; Height = 1024; Format = RGBA8; SRGB = false; };
 sampler SamplerLUT { Texture = TexCorrectionLUT; MinFilter = LINEAR; MagFilter = LINEAR; AddressU = CLAMP; AddressV = CLAMP; };
 
-texture TexPostLinearLuma { Width = 1024; Height = 1024; Format = R32F; MipLevels = 11; };
-sampler SamplerPostLinearLuma { Texture = TexPostLinearLuma; MinFilter = LINEAR; MagFilter = LINEAR; MipFilter = LINEAR; };
+texture TexPostLinearLuminance { Width = 1024; Height = 1024; Format = R32F; MipLevels = 11; };
+sampler SamplerPostLinearLuminance { Texture = TexPostLinearLuminance; MinFilter = LINEAR; MagFilter = LINEAR; MipFilter = LINEAR; };
 
 texture TexAPL { Width = 1; Height = 1; Format = R32F; };
 sampler SamplerAPL { Texture = TexAPL; MinFilter = POINT; MagFilter = POINT; };
@@ -296,30 +302,59 @@ void PS_ApplyCorrection(float4 pos : SV_Position, float2 texcoord : TEXCOORD, ou
     float4 final_color;
     
     float3 lin_rgb;
-    float lin_luma;
 
     if (APLInputMode == 1) // HDR10
     {
         lin_rgb = pq_to_linear(color.rgb);
-        lin_luma = dot(lin_rgb, float3(0.2627, 0.6780, 0.0593));
     }
     else // scRGB
     {
         lin_rgb = color.rgb * (SIGNAL_REFERENCE_NITS / 10000.0);
-        lin_luma = dot(lin_rgb, float3(0.2126, 0.7152, 0.0722));
+    }
+
+    if (EnableTonemapping)
+    {
+        float max_nits = max(lin_rgb.r, max(lin_rgb.g, lin_rgb.b)) * 10000.0;
+        if (max_nits > 0.0) 
+        {
+            float pq_max = linear_to_pq_scalar(max_nits / 10000.0);
+            float mapped_pq_max = ApplyBT2390EETFToPQWithShape(pq_max, TM_InputPeak, TM_OutputPeak, TM_Shape);
+            float mapped_max_nits = pq_to_linear_scalar(mapped_pq_max) * 10000.0;
+            lin_rgb *= (mapped_max_nits / max_nits);
+        }
+    }
+
+    float lin_luminance;
+    if (APLInputMode == 1)
+    {
+        lin_luminance = dot(lin_rgb, float3(0.2627, 0.6780, 0.0593));
+    }
+    else
+    {
+        lin_luminance = dot(lin_rgb, float3(0.2126, 0.7152, 0.0722));
     }
     
-    float pq_luma = linear_to_pq_scalar(lin_luma);
+    float pq_luminance = linear_to_pq_scalar(lin_luminance);
     
-    float2 packed_luma = tex2D(SamplerLUT, float2(pq_luma, current_state_apl)).rg;
-    float corrected_pq_luma = packed_luma.r * (65280.0 / 65535.0) + packed_luma.g * (255.0 / 65535.0);
+    float2 packed_luminance = tex2D(SamplerLUT, float2(pq_luminance, current_state_apl)).rg;
+    float corrected_pq_luminance = packed_luminance.r * (65280.0 / 65535.0) + packed_luminance.g * (255.0 / 65535.0);
     
-    float corrected_lin_luma = pq_to_linear_scalar(corrected_pq_luma);
-    float scale = corrected_lin_luma / max(lin_luma, 1e-8);
+    float corrected_lin_luminance = pq_to_linear_scalar(corrected_pq_luminance);
+    float scale = corrected_lin_luminance / max(lin_luminance, 1e-8);
     
     if (EnableColorPreservation)
     {
-        float max_rgb_channel = max(lin_rgb.r, max(lin_rgb.g, lin_rgb.b));
+        float max_rgb_channel;
+        if (APLInputMode == 0) // scRGB uses sRGB primaries, convert to BT.2020 to correctly evaluate peak channel
+        {
+            float3 lin_rgb_2020 = mul(sRGB_2_BT2020, lin_rgb);
+            max_rgb_channel = max(lin_rgb_2020.r, max(lin_rgb_2020.g, lin_rgb_2020.b));
+        }
+        else
+        {
+            max_rgb_channel = max(lin_rgb.r, max(lin_rgb.g, lin_rgb.b));
+        }
+
         float normalized_peak_limit = PEAK_MONITOR_NITS / 10000.0;
         float max_hue_preserving_scale = normalized_peak_limit / max(max_rgb_channel, 1e-8);
         scale = min(scale, max(max_hue_preserving_scale, 1.0));
@@ -327,46 +362,34 @@ void PS_ApplyCorrection(float4 pos : SV_Position, float2 texcoord : TEXCOORD, ou
 
     float3 scaled_lin_rgb = lin_rgb * scale;
 
-    if (EnableTonemapping)
-    {
-        float max_nits = max(scaled_lin_rgb.r, max(scaled_lin_rgb.g, scaled_lin_rgb.b)) * 10000.0;
-        if (max_nits > 0.0) 
-        {
-            float pq_max = linear_to_pq_scalar(max_nits / 10000.0);
-            float mapped_pq_max = ApplyBT2390EETFToPQWithShape(pq_max, TM_InputPeak, TM_OutputPeak, TM_Shape);
-            float mapped_max_nits = pq_to_linear_scalar(mapped_pq_max) * 10000.0;
-            scaled_lin_rgb *= (mapped_max_nits / max_nits);
-        }
-    }
-
     if (APLInputMode == 1) final_color = float4(linear_to_pq(scaled_lin_rgb), color.a);
     else final_color = float4(scaled_lin_rgb * (10000.0 / SIGNAL_REFERENCE_NITS), color.a);
     
     output = DebugAPL ? float4(current_state_apl.xxx, 1.0) : final_color;
 }
 
-// Pass 3: Convert the corrected BackBuffer to Linear Luma and generate Hardware MipMaps
-void PS_StoreLinearLuma(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float lin_luma_out : SV_Target)
+// Pass 3: Convert the corrected BackBuffer to Linear Luminance and generate Hardware MipMaps
+void PS_StoreLinearLuminance(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float lin_luminance_out : SV_Target)
 {
     float4 color = tex2D(ReShade::BackBuffer, texcoord);
     
     if (APLInputMode == 1)
     {
         float3 lin_rgb = pq_to_linear(color.rgb);
-        lin_luma_out = dot(lin_rgb, float3(0.2627, 0.6780, 0.0593));
+        lin_luminance_out = dot(lin_rgb, float3(0.2627, 0.6780, 0.0593));
     }
     else
     {
         float3 lin_rgb = color.rgb * (SIGNAL_REFERENCE_NITS / 10000.0);
         float3 luma_coeffs = float3(0.2126, 0.7152, 0.0722);
-        lin_luma_out = dot(lin_rgb, luma_coeffs);
+        lin_luminance_out = dot(lin_rgb, luma_coeffs);
     }
 }
 
 // Pass 4: Calculate Closed-Loop APL (Manual Temporal Blend using separate Attack/Release times)
 void PS_CalculateAPL(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float apl_out : SV_Target)
 {
-    float new_hardware_lin_apl = tex2Dlod(SamplerPostLinearLuma, float4(0.5, 0.5, 0, 10.0)).r;
+    float new_hardware_lin_apl = tex2Dlod(SamplerPostLinearLuminance, float4(0.5, 0.5, 0, 10.0)).r;
     float new_hardware_pq_apl = linear_to_pq_scalar(new_hardware_lin_apl);
     
     float previous_apl = tex2D(SamplerAPL_Prev, float2(0.5, 0.5)).r;
@@ -399,11 +422,11 @@ technique QDOLED_EOTF_LUT_Fix
         PixelShader = PS_ApplyCorrection;
     }
     
-    pass StoreLinearLuma
+    pass StoreLinearLuminance
     {
         VertexShader = PostProcessVS;
-        PixelShader = PS_StoreLinearLuma;
-        RenderTarget = TexPostLinearLuma;
+        PixelShader = PS_StoreLinearLuminance;
+        RenderTarget = TexPostLinearLuminance;
         GenerateMipMaps = true;
     }
     
